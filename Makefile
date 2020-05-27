@@ -1,22 +1,27 @@
-FILENAME=zhwiki-20200501-all-titles-in-ns0
+FILENAME_zhwiki := zhwiki-20200501-all-titles-in-ns0
+FILENAME_zhwikidict := zhwiktionary-20200520-all-titles-in-ns0
+
+FILENAMES := $(FILENAME_zhwiki) $(FILENAME_zhwikidict)
+ARCHIVES := $(addsuffix .gz, $(FILENAMES))
 
 all: build
 
 build: zhwiki.dict
 
-download: $(FILENAME).gz
+download: $(ARCHIVES)
 
-$(FILENAME).gz:
-	wget https://dumps.wikimedia.org/zhwiki/20200501/$(FILENAME).gz
+$(ARCHIVES):
+	wget https://dumps.wikimedia.org/zhwiki/20200501/$(FILENAME_zhwiki).gz
+	wget https://dumps.wikimedia.org/zhwiktionary/20200520/$(FILENAME_zhwikidict).gz
+
+%: %.gz
+	@gzip -k -d $<
 
 web-slang.source:
 	./zhwiki-web-slang.py > web-slang.source
 
-$(FILENAME): $(FILENAME).gz
-	gzip -k -d $(FILENAME).gz
-
-zhwiki.source: $(FILENAME) web-slang.source
-	cat $(FILENAME) web-slang.source > zhwiki.source
+zhwiki.source: $(FILENAMES) web-slang.source
+	cat $(FILENAMES) web-slang.source > zhwiki.source
 
 zhwiki.raw: zhwiki.source
 	./convert.py zhwiki.source > zhwiki.raw
@@ -38,4 +43,4 @@ install_rime_dict: zhwiki.dict.yaml
 	install -Dm644 zhwiki.dict.yaml -t $(DESTDIR)/usr/share/rime-data/
 
 clean:
-	rm -f $(FILENAME) zhwiki.{source,raw,dict,dict.yaml} web-slang.source
+	rm -f $(FILENAMES) zhwiki.{source,raw,dict,dict.yaml} web-slang.source
